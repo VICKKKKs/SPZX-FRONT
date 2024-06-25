@@ -32,6 +32,20 @@
           :placeholder="$t('login.password')"
         />
       </el-form-item>
+
+      <!-- 页面结构 -->
+      <el-form-item prop="captcha">
+        <div class="captcha">
+          <el-input
+            class="text"
+            v-model="model.captcha"
+            prefix-icon="Picture"
+            placeholder="请输入验证码"
+          ></el-input>
+          <img :src="captchaSrc" @click="refreshCaptcha" />
+        </div>
+      </el-form-item>
+
       <el-form-item>
         <el-button
           :loading="loading"
@@ -59,8 +73,9 @@ import {
   ref,
   computed,
   watch,
+  onMounted,
 } from 'vue'
-import { Login } from '@/api/login'
+import { Login, GetValidateCode } from '@/api/login'
 import { useRouter, useRoute } from 'vue-router'
 import ChangeLang from '@/layout/components/Topbar/ChangeLang.vue'
 import useLang from '@/i18n/useLang'
@@ -70,6 +85,9 @@ export default defineComponent({
   components: { ChangeLang },
   name: 'login',
   setup() {
+    onMounted(() => {
+      state.refreshCaptcha()
+    })
     const { proxy: ctx } = getCurrentInstance() // 可以把ctx当成vue2中的this
     const router = useRouter()
     const route = useRoute()
@@ -103,6 +121,8 @@ export default defineComponent({
       model: {
         userName: 'admin',
         password: '123456',
+        captcha: '',
+        codeKey: '',
       },
       rules: getRules(),
       loading: false,
@@ -110,6 +130,18 @@ export default defineComponent({
         state.loading ? ctx.$t('login.logining') : ctx.$t('login.login')
       ),
       loginForm: ref(null),
+      captchaSrc: '',
+      refreshCaptcha: async () => {
+        // alert("调用验证码接口加载验证码数据")
+        // 调用login.js这个api中的refreshCaptcha方法
+        GetValidateCode().then(response => {
+          // 处理结果
+          state.model.codeKey = response.data.codeKey
+          state.captchaSrc = response.data.codeValue
+        })
+        // const {data,code,message} = await GetValidateCode();
+        // 处理结果data.codeKey,data.codeValue
+      },
       submit: () => {
         if (state.loading) {
           return
@@ -152,6 +184,18 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
+.captcha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.captcha img {
+  cursor: pointer;
+  margin-left: 20px;
+}
+
 .login {
   transition: transform 1s;
   transform: scale(1);
