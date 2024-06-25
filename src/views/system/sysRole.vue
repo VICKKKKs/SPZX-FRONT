@@ -80,7 +80,7 @@
           node-key="id"
           :props="defaultProps"
           :check-on-click-node="true"
-          :ref="tree"
+          ref="tree"
         />
         <el-form-item>
           <el-button type="primary" @click="doAssign">提交</el-button>
@@ -144,12 +144,35 @@ const showAssignMenu = row => {
 
 // 提交分配菜单
 const doAssign = () => {
-  // alert('提交分配')
-  dialogMenuVisible.value = false
-  // a().then(response => {
-  //   sysMenuTreeList.value = response.data.sysMenuTreeList
-  //   tree.value.setCheckedNodes(response.data.MenuIds)
-  // })
+  const assginMenuDto = {
+    roleId: 0,
+    menuIdList: ref([]),
+  }
+
+  let CheckedNodes = tree.value.getCheckedNodes()
+  let HalfCheckedNodes = tree.value.getHalfCheckedNodes()
+
+  let checkedNodes = CheckedNodes.map(CheckedNode => {
+    return {
+      menuId: CheckedNode.id,
+      isHalf: 0,
+    }
+  })
+
+  let halfCheckedNodes = HalfCheckedNodes.map(HalfCheckedNode => {
+    return {
+      menuId: HalfCheckedNode.id,
+      isHalf: 1,
+    }
+  })
+  assginMenuDto.roleId = roleId.value
+
+  assginMenuDto.menuIdList = [...checkedNodes, ...halfCheckedNodes]
+
+  DoAssignMenuIdToSysRole(assginMenuDto).then(response => {
+    ElMessage.success('添加成功')
+    dialogMenuVisible.value = false
+  })
 }
 
 // 分页条总记录数
