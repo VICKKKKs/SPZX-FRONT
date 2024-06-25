@@ -28,7 +28,7 @@
           </el-col>
         </el-row>
         <el-row style="display: flex">
-          <el-button type="primary" size="small" @click="fetchData">
+          <el-button type="primary" size="small" @click="fetchData()">
             搜索
           </el-button>
           <el-button size="small" @click="reset">重置</el-button>
@@ -161,7 +161,7 @@ onMounted(() => {
 })
 
 const reset = () => {
-  queryDto.value = fetchData
+  queryDto.value = { ...null }
 }
 
 // 表格数据模型
