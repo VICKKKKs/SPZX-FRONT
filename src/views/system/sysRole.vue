@@ -98,6 +98,8 @@ import {
   SaveSysRole,
   UpdateSysRole,
   DeleteSysRoleById,
+  GetSysRoleMenuIds,
+  DoAssignMenuIdToSysRole,
 } from '@/api/sysRole'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -123,43 +125,26 @@ const defaultProps = {
   label: 'title',
 }
 
-const sysMenuTreeList = ref([
-  {
-    id: 1,
-    title: '系统管理',
-    children: [
-      { id: 2, title: '用户管理' },
-      { id: 3, title: '角色管理' },
-      { id: 4, title: '菜单管理' },
-    ],
-  },
-  {
-    id: 5,
-    title: '数据管理',
-    component: 'base',
-    sortValue: 2,
-    status: 1,
-    createTime: '2023-05-04',
-    children: [
-      { id: 6, title: '商品单位' },
-      { id: 7, title: '地区管理' },
-    ],
-  },
-])
+// 菜单中的数据
+const sysMenuTreeList = ref([])
 
 const dialogMenuVisible = ref(false)
 const roleId = ref(0)
 
 // 分配对话框
 const tree = ref()
-const showAssignMenu = async row => {
+const showAssignMenu = row => {
   dialogMenuVisible.value = true
   roleId.value = row.id
+  GetSysRoleMenuIds(roleId.value).then(response => {
+    sysMenuTreeList.value = response.data.sysMenuList
+    tree.value.setCheckedKeys(response.data.roleMenuIds)
+  })
 }
 
 // 提交分配菜单
 const doAssign = () => {
-  alert('提交分配')
+  // alert('提交分配')
   dialogMenuVisible.value = false
   // a().then(response => {
   //   sysMenuTreeList.value = response.data.sysMenuTreeList

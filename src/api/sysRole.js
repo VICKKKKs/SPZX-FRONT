@@ -58,3 +58,18 @@ export const DeleteSysRoleById = roleId => {
     method: 'delete',
   })
 }
+
+export const GetSysRoleMenuIds = roleId => {
+  return request({
+    url: `/admin/system/sysRoleMenu/getSysRoleMenuIds/` + roleId,
+    method: 'get',
+  })
+}
+
+export const DoAssignMenuIdToSysRole = assignMenuDto => {
+  return request({
+    url: `/admin/system/sysRoleMenu/doAssignMenuIdToSysRole`,
+    method: 'post',
+    data: assignMenuDto,
+  })
+}
