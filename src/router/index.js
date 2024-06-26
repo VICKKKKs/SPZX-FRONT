@@ -37,9 +37,9 @@ import test from './modules/test'
 
 /* 菜单栏的路由 */
 // 固定菜单
-export const fixedRoutes = [...home, ...system]
+export const fixedRoutes = [...home] // , ...system
 // 动态菜单
-export const asyncRoutes = [...test]
+export const asyncRoutes = [...test, ...system]
 
 const router = createRouter({
   history: createWebHashHistory(),
