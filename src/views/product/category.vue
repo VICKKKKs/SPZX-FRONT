@@ -1,8 +1,25 @@
 <template>
   <div class="tools-div">
-    <el-button type="success" size="small">导出</el-button>
-    <el-button type="primary" size="small">导入</el-button>
+    <el-button type="success" size="small" @click="exportData">导出</el-button>
+    <el-button type="primary" size="small" @click="importData">
+      导入
+    </el-button>
   </div>
+
+  <el-dialog v-model="dialogImportVisible" title="导入" width="30%">
+    <el-form label-width="120px">
+      <el-form-item label="分类文件">
+        <el-upload
+          class="upload-demo"
+          action="http://localhost:8501/admin/product/category/importData"
+          :on-success="onUploadSuccess"
+          :headers="headers"
+        >
+          <el-button type="primary">上传</el-button>
+        </el-upload>
+      </el-form-item>
+    </el-form>
+  </el-dialog>
 
   <!---懒加载的树形表格-->
   <el-table
@@ -20,7 +37,7 @@
     </el-table-column>
     <el-table-column prop="orderNum" label="排序" />
     <el-table-column prop="status" label="状态" #default="scope">
-      {{ scope.row.status == 1 ? '正常' : '停用' }}
+      {{ scope.row.status === 1 ? '正常' : '停用' }}
     </el-table-column>
     <el-table-column prop="createTime" label="创建时间" />
   </el-table>
@@ -28,12 +45,31 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { FindCategoryByParentId } from '@/api/category'
+import { FindCategoryByParentId, ExportCategoryData } from '@/api/category'
+import { useApp } from '@/pinia/modules/app'
+import { ElMessage } from 'element-plus'
 
 onMounted(async () => {
   const { code, data, message } = await FindCategoryByParentId(0)
   list.value = data
 })
+
+const exportData = () => {
+  // window.location.href =
+  //   'http://localhost:8501/admin/product/category/exportData'
+  // 调用 ExportCategoryData() 方法获取导出数据
+  ExportCategoryData().then(res => {
+    // 创建 Blob 对象，用于包含二进制数据
+    const blob = new Blob([res])
+    // 创建 a 标签元素，并将 Blob 对象转换成 URL
+    const link = document.createElement('a')
+    link.href = window.URL.createObjectURL(blob)
+    // 设置下载文件的名称
+    link.download = '分类数据.xlsx'
+    // 模拟点击下载链接
+    link.click()
+  })
+}
 
 // 定义list属性模型
 const list = ref([])
@@ -44,7 +80,27 @@ const fetchData = async (row, treeNode, resolve) => {
   const { data } = await FindCategoryByParentId(row.id)
 
   // 返回数据
+  // resolve是由 Element-UI 的树形表格组件（el-table）在调用 fetchData 方法时自动传递的一个回调函数
   resolve(data)
+}
+
+const dialogImportVisible = ref(false)
+const headers = {
+  token: useApp().authorization.token, // 从pinia中获取token，在进行文件上传的时候将token设置到请求头中
+}
+
+// 导入
+const importData = () => {
+  dialogImportVisible.value = true
+}
+
+// 上传文件成功以后要执行方法
+const onUploadSuccess = async (response, file) => {
+  ElMessage.success('操作成功')
+  dialogImportVisible.value = false
+  // 关闭会话框并重更新查询一下list列表
+  const { data } = await FindCategoryByParentId(0)
+  list.value = data
 }
 </script>
 
