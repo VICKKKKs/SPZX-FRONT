@@ -33,33 +33,51 @@
   </el-table>
 
   <el-pagination
+    v-model:current-page="pageParams.page"
+    v-model:page-size="pageParams.limit"
     :page-sizes="[10, 20, 50, 100]"
     layout="total, sizes, prev, pager, next"
     :total="total"
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
   />
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { GetProductSpecPageList } from '@/api/productSpec'
 
+onMounted(() => {
+  fetchData()
+})
+//页面变化
+const handleSizeChange = size => {
+  pageParams.value.limit = size
+  fetchData()
+}
+const handleCurrentChange = number => {
+  pageParams.value.page = number
+  fetchData()
+}
+
+const pageParams = ref({
+  page: 1,
+  limit: 10,
+})
+
+const fetchData = async () => {
+  const { data } = await GetProductSpecPageList(
+    pageParams.value.page,
+    pageParams.value.limit
+  )
+  data.list.forEach(item => {
+    item.specValue = JSON.parse(item.specValue) // 将规格字符串转换成规格js对象
+  })
+  total.value = data.total
+  list.value = data.list
+}
 // 表格数据模型
-const list = ref([
-  {
-    id: 2,
-    createTime: '2023-05-06 12:56:08',
-    specName: '笔记本电脑',
-    specValue: [{ key: '内存', valueList: ['8G', '18G', '32G'] }],
-  },
-  {
-    id: 1,
-    createTime: '2023-05-06 12:40:22',
-    specName: '小米手机',
-    specValue: [
-      { key: '颜色', valueList: ['白色', '红色', '黑色'] },
-      { key: '内存', valueList: ['8G', '18G'] },
-    ],
-  },
-])
+const list = ref([])
 
 // 分页条数据模型
 const total = ref(0)
