@@ -40,7 +40,7 @@
   </div>
 
   <div class="tools-div">
-    <el-button type="success" size="small">添 加</el-button>
+    <el-button type="success" size="small" @click="addShow()">添 加</el-button>
   </div>
 
   <el-table :data="list" style="width: 100%">
@@ -50,8 +50,8 @@
       <img :src="scope.row.logo" width="50" />
     </el-table-column>
     <el-table-column prop="createTime" label="创建时间" />
-    <el-table-column label="操作" align="center" width="200">
-      <el-button type="primary" size="small">
+    <el-table-column label="操作" align="center" width="200" #default="scope">
+      <el-button type="primary" size="small" @click="editShow(scope.row)">
         修改
       </el-button>
       <el-button type="danger" size="small">
@@ -103,32 +103,91 @@
 import { ref, onMounted } from 'vue'
 import { FindAllBrand } from '@/api/brand'
 import { FindCategoryByParentId } from '@/api/category'
-import { GetCategoryBrandPageList } from '@/api/categoryBrand'
+import {
+  GetCategoryBrandPageList,
+  SaveCategoryBrand,
+  UpdateCategoryBrand,
+} from '@/api/categoryBrand'
+import { ElMessage } from 'element-plus'
 
 // ================数据模型定义  start ===============================================
 onMounted(() => {
-  selectAllBrandList()
+  // selectAllBrandList()
   fetchData()
 })
 
-const selectAllBrandList = async () => {
-  const { data } = await FindAllBrand()
-  brandList.value = data
-}
+// const selectAllBrandList = async () => {
+//   const { data } = await FindAllBrand()
+//   brandList.value = data
+// }
 
 // 定义搜索表单数据模型
 const brandList = ref([])
 const queryDto = ref({ brandId: '', categoryId: '' })
 const searchCategoryIdList = ref([])
+const dialogVisible = ref(false)
 
 const pageParams = ref({
   page: 1,
   limit: 10,
 })
 
+const categoryBrand = ref({
+  id: '',
+  categoryId: '',
+  brandId: '',
+})
+
+const addShow = () => {
+  dialogVisible.value = true
+  categoryBrand.value = { ...null }
+}
+
+const editShow = row => {
+  dialogVisible.value = true
+  categoryBrand.value = { ...row }
+}
+
+const saveOrUpdate = async () => {
+  if (categoryBrand.value.brandId == '') {
+    ElMessage.info('品牌信息必须选择')
+    return
+  }
+  //categoryId为数组：[1,2,3]
+  if (categoryBrand.value.categoryId.length != 3) {
+    ElMessage.info('分类信息必须选择')
+    return
+  }
+  //系统只需要三级分类id
+  categoryBrand.value.categoryId = categoryBrand.value.categoryId[2]
+  if (!categoryBrand.value.id) {
+    saveData()
+  } else {
+    editData()
+  }
+}
+
+const editData = async () => {
+  await UpdateCategoryBrand(categoryBrand.value)
+  dialogVisible.value = false
+  ElMessage.success('操作成功')
+  fetchData()
+}
+
+const saveData = async () => {
+  await SaveCategoryBrand(categoryBrand.value)
+  dialogVisible.value = false
+  ElMessage.success('操作成功')
+  fetchData()
+}
+
 const fetchData = async () => {
-  if (searchCategoryIdList.value.length == 3) {
-    queryDto.value.categoryId == searchCategoryIdList.value[2]
+  FindAllBrand().then(res => {
+    brandList.value = res.data
+  })
+
+  if (searchCategoryIdList.value.length === 3) {
+    queryDto.value.categoryId = searchCategoryIdList.value[2]
   }
   GetCategoryBrandPageList(
     pageParams.value.page,
