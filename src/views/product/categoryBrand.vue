@@ -9,6 +9,7 @@
               placeholder="选择品牌"
               size="small"
               style="width: 100%"
+              v-model="queryDto.brandId"
             >
               <el-option
                 v-for="item in brandList"
@@ -21,15 +22,19 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="分类">
-            <el-cascader :props="categoryProps" style="width: 100%" />
+            <el-cascader
+              :props="categoryProps"
+              style="width: 100%"
+              v-model="searchCategoryIdList"
+            />
           </el-form-item>
         </el-col>
       </el-row>
       <el-row style="display:flex">
-        <el-button type="primary" size="small">
+        <el-button type="primary" size="small" @click="fetchData()">
           搜索
         </el-button>
-        <el-button size="small">重置</el-button>
+        <el-button size="small" @click="resetData">重置</el-button>
       </el-row>
     </el-form>
   </div>
@@ -59,89 +64,115 @@
     :page-sizes="[10, 20, 50, 100]"
     layout="total, sizes, prev, pager, next"
     :total="total"
+    @size-change="handleSizeChange"
+    @current-change="handleCurrentChange"
   />
+
+  <el-dialog v-model="dialogVisible" title="添加或修改" width="30%">
+    <el-form label-width="120px">
+      <el-form-item label="品牌">
+        <el-select
+          class="m-2"
+          placeholder="选择品牌"
+          size="small"
+          v-model="categoryBrand.brandId"
+        >
+          <el-option
+            v-for="item in brandList"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="分类">
+        <el-cascader
+          :props="categoryProps"
+          v-model="categoryBrand.categoryId"
+        />
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" @click="saveOrUpdate">提交</el-button>
+        <el-button @click="dialogVisible = false">取消</el-button>
+      </el-form-item>
+    </el-form>
+  </el-dialog>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { FindAllBrand } from '@/api/brand'
+import { FindCategoryByParentId } from '@/api/category'
+import { GetCategoryBrandPageList } from '@/api/categoryBrand'
 
 // ================数据模型定义  start ===============================================
+onMounted(() => {
+  selectAllBrandList()
+  fetchData()
+})
+
+const selectAllBrandList = async () => {
+  const { data } = await FindAllBrand()
+  brandList.value = data
+}
 
 // 定义搜索表单数据模型
-const brandList = ref([
-  {
-    id: 2,
-    createTime: '2023-05-06 09:31:19',
-    name: '华为',
-    logo: 'http://139.198.127.41:9000/sph/20230506/华为.png',
-  },
-  {
-    id: 1,
-    createTime: '2023-05-06 09:30:27',
-    name: '小米',
-    logo: 'http://139.198.127.41:9000/sph/20230506/小米.png',
-  },
-])
+const brandList = ref([])
+const queryDto = ref({ brandId: '', categoryId: '' })
+const searchCategoryIdList = ref([])
+
+const pageParams = ref({
+  page: 1,
+  limit: 10,
+})
+
+const fetchData = async () => {
+  if (searchCategoryIdList.value.length == 3) {
+    queryDto.value.categoryId == searchCategoryIdList.value[2]
+  }
+  GetCategoryBrandPageList(
+    pageParams.value.page,
+    pageParams.value.limit,
+    queryDto.value
+  ).then(res => {
+    list.value = res.data.list
+    total.value = res.data.total
+  })
+}
+
+const resetData = () => {
+  queryDto.value = { brandId: '', categoryId: '' }
+}
+
+//页面变化
+const handleSizeChange = size => {
+  pageParams.value.limit = size
+  fetchData()
+}
+const handleCurrentChange = number => {
+  pageParams.value.page = number
+  fetchData()
+}
 
 const props = {
   lazy: true,
   value: 'id',
   label: 'name',
   leaf: 'leaf',
-  lazyLoad(node, resolve) {
+  async lazyLoad(node, resolve) {
+    if (typeof node.value == 'undefined') node.value = 0
     // 加载数据的方法
-    const data = [
-      {
-        id: 643,
-        createTime: '2023-05-22 15:31:18',
-        name: '玩具乐器',
-        imageUrl:
-          'https://lilishop-oss.oss-cn-beijing.aliyuncs.com/0f423fb60f084b2caade164fae25a9a0.png',
-        parentId: 0,
-        status: 1,
-        orderNum: 10,
-        hasChildren: true,
-        children: null,
-      },
-      {
-        id: 576,
-        createTime: '2023-05-22 15:31:13',
-        name: '汽车用品',
-        imageUrl:
-          'https://lilishop-oss.oss-cn-beijing.aliyuncs.com/665dd952b54e4911b99b5e1eba4b164f.png',
-        parentId: 0,
-        status: 1,
-        orderNum: 10,
-        hasChildren: true,
-        children: null,
-      },
-    ]
+    const { data } = await FindCategoryByParentId(node.value)
+    let clist = data.filter(item => {
+      item.leaf = !item.hasChildren
+    })
     resolve(data) // 返回数据
   },
 }
 const categoryProps = ref(props)
 
 // 定义表格数据模型
-const list = ref([
-  {
-    id: 2,
-    createTime: '2023-05-24 15:19:24',
-    brandId: 1,
-    categoryId: 99,
-    categoryName: '定制服务',
-    brandName: '小米',
-    logo: 'http://139.198.127.41:9000/sph/20230506/小米.png',
-  },
-  {
-    id: 1,
-    createTime: '2023-05-06 10:59:08',
-    brandId: 2,
-    categoryId: 76,
-    categoryName: 'UPS电源\t',
-    brandName: '华为',
-    logo: 'http://139.198.127.41:9000/sph/20230506/华为.png',
-  },
-])
+const list = ref([])
 
 // 分页条数据模型
 const total = ref(0)

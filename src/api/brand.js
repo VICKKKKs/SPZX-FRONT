@@ -31,3 +31,10 @@ export const DeleteBrandById = id => {
     method: 'delete',
   })
 }
+
+export const FindAllBrand = () => {
+  return request({
+    url: `/admin/product/brand/findAllBrand`,
+    method: 'get',
+  })
+}
