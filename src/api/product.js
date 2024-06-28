@@ -49,7 +49,7 @@ export const DeleteProductById = id => {
 export const UpdateProductAuditStatus = (id, auditStatus) => {
   return request({
     url: `${api_name}/updateAuditStatus/${id}/${auditStatus}`,
-    method: 'get',
+    method: 'put',
   })
 }
 

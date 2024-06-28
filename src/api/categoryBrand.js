@@ -29,7 +29,7 @@ export const UpdateCategoryBrand = categoryBrand => {
 
 export const FindBrandByCategoryId = categoryId => {
   return request({
-    url: `/admin/product/brand/findBrandByCategoryId/${categoryId}`,
+    url: `/admin/product/categoryBrand/findBrandByCategoryId/${categoryId}`,
     method: 'get',
   })
 }
