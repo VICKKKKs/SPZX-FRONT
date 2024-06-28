@@ -26,7 +26,7 @@
       <el-button type="primary" size="small" @click="editShow(scope.row)">
         修改
       </el-button>
-      <el-button type="danger" size="small">
+      <el-button type="danger" size="small" @click="remove(scope.row.id)">
         删除
       </el-button>
     </el-table-column>
@@ -90,6 +90,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import {
+  DeleteProductSpecById,
   GetProductSpecPageList,
   SaveProductSpec,
   UpdateProductSpec,
@@ -120,7 +121,7 @@ const fetchData = async () => {
     pageParams.value.limit
   )
   data.list.forEach(item => {
-    item.specValue = JSON.parse(item.specValue) // 将规格字符串转换成规格js对象
+    item.specValue = JSON.parse(item.specValue) // 将规格字符串转换成规格js对象,如果规格值不处理，页面不能正常显示规格值
   })
   total.value = data.total
   list.value = data.list
@@ -158,11 +159,20 @@ const addSpec = () => {
   productSpec.value.specValue.push({})
 }
 const saveOrUpdate = async () => {
+  // 深拷贝 productSpec 对象，确保不修改原对象。
+  //   处理规格值，将字符串形式的规格值转换为数组。
+  // 将规格值转换为 JSON 字符串，以符合后端接口要求。
+  // 根据是否存在 id 判断执行更新操作还是新增操作。
+  // 更新操作使用 await 等待异步完成，新增操作使用 then 方法处理返回的 Promise。
+  // 操作成功后，关闭对话框，显示成功消息，并重新获取数据更新表格。
+
   // 处理参数
+  // 使用 JSON.parse(JSON.stringify(productSpec.value)) 进行深拷贝，确保对 productSpec 的修改不会影响到原对象。
   let productSpecClone = JSON.parse(JSON.stringify(productSpec.value))
   console.log(productSpecClone)
 
   // 处理规格值值
+  // 遍历 productSpecClone.specValue 数组，如果 valueList 是字符串形式，则使用 split(',') 将其转换为数组。这样做的目的是确保每个规格值都是数组形式，便于后续处理。
   productSpecClone.specValue.filter(specValue => {
     if (typeof specValue.valueList === 'string') {
       specValue.valueList = specValue.valueList.split(',') // 避开修改的数据数组
@@ -170,6 +180,7 @@ const saveOrUpdate = async () => {
   })
 
   // 转换规格值为字符串
+  // 将 specValue 数组转换为 JSON 字符串。这是为了符合后端接口的要求，通常后端存储数据时需要字符串格式。
   productSpecClone.specValue = JSON.stringify(productSpecClone.specValue)
   console.log(productSpecClone)
 
@@ -187,6 +198,23 @@ const saveOrUpdate = async () => {
       fetchData()
     })
   }
+}
+
+// 删除
+const remove = async id => {
+  ElMessageBox.confirm('此操作将永久删除该记录, 是否继续?', 'warning', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  })
+    .then(async () => {
+      await DeleteProductSpecById(id)
+      ElMessage.success('删除成功')
+      fetchData()
+    })
+    .catch(() => {
+      ElMessage.info('取消删除')
+    })
 }
 </script>
 

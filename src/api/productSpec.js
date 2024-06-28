@@ -32,3 +32,11 @@ export const FindAllProductSpec = () => {
     method: 'get',
   })
 }
+
+// 删除所选商品规格
+export const DeleteProductSpecById = id => {
+  return request({
+    url: `/admin/product/productSpec/deleteById/${id}`,
+    method: 'delete',
+  })
+}
