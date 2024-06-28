@@ -6,3 +6,29 @@ export const GetProductSpecPageList = (page, limit) => {
     method: 'get',
   })
 }
+
+// 保存信息
+export const SaveProductSpec = productSpec => {
+  return request({
+    url: `/admin/product/productSpec/save`,
+    method: 'post',
+    data: productSpec,
+  })
+}
+
+// 修改信息
+export const UpdateProductSpec = productSpec => {
+  return request({
+    url: `/admin/product/productSpec/updateById`,
+    method: 'put',
+    data: productSpec,
+  })
+}
+
+// 查询所有规格信息
+export const FindAllProductSpec = () => {
+  return request({
+    url: `/admin/product/productSpec/findAllProductSpec`,
+    method: 'get',
+  })
+}
