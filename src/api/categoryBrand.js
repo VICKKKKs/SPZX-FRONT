@@ -26,3 +26,10 @@ export const UpdateCategoryBrand = categoryBrand => {
     data: categoryBrand,
   })
 }
+
+export const FindBrandByCategoryId = categoryId => {
+  return request({
+    url: `/admin/product/brand/findBrandByCategoryId/${categoryId}`,
+    method: 'get',
+  })
+}
